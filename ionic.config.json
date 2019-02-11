@@ -1,5 +1,7 @@
 {
   "name": "slack-otp",
-  "integrations": {},
+  "integrations": {
+    "cordova": {}
+  },
   "type": "ionic-angular"
 }
