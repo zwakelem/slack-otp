@@ -12,6 +12,7 @@ declare var SMS: any;
 
 export class HomePage {
   otp = '';
+  message = '';
   constructor(public navCtrl: NavController, private http: Http, private platform: Platform, private androidPermissions: AndroidPermissions, private backgroundMode: BackgroundMode) {
   }
 
@@ -65,22 +66,34 @@ export class HomePage {
     const messageText = {
       'text': this.otp
     };
+    this.message = `Sending OTP ${this.otp} to #Slack....`;
     return this.http.post(url, JSON.stringify(messageText))
       .subscribe(res => {
-        alert('Message successfully posted');
+        this.message = `OTP ${this.otp} successfully sent to #Slack....`;
       }, error => {
-        alert('Failed to post message');
+        this.message = `Failed to send OTP ${this.otp} to #Slack....`;
       });
   }
 
-  findOtp(array: Array<any>): string {
+  findOtp(array: Array<any>) {
     let result ="";
     array.forEach(sms =>{
       if(sms.body.toLowerCase().includes("use this code for microsoft verification")){
-        result = sms.body.substring(0,sms.body.indexOf("\n"));
+        result = sms;
+        let currentDate = 0;
+        if(window.localStorage.getItem("smsDate") !== null){
+          currentDate = parseInt(window.localStorage.getItem("smsDate"));
+        }
+        if(sms["date"] > currentDate){
+          this.otp = sms.body.substring(0,sms.body.indexOf("\n"));
+         window.localStorage.setItem("smsDate",sms["date"]);
+           this.sendSlackMessage()
+        }
       }
     })
-    return result;
+    if(result === ""){
+      this.message ="No new OTP sms found!";
+    }
   }
 
   readListSMS()
@@ -97,7 +110,7 @@ export class HomePage {
          if(SMS) SMS.listSMS(filter, (listSms)=>{
              console.log("Sms",listSms);
              if(listSms){
-               this.otp = this.findOtp(listSms);
+               this.findOtp(listSms);
              }
             },
   
